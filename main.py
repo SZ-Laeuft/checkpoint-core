@@ -19,9 +19,9 @@ def main():
         if lastid!=tag_id or failed:
             lastid=tag_id
 
-            print(f'Read UID: {tag_id} at {time.localtime()}')
+            print(f'Read UID: {tag_id} at {time.asctime()}')
 
-            url = f'https://192.168.68.116:44320/api/CompleteRound?id={tag_id}'
+            url = f'http://192.168.68.116:44320/api/CompleteRound?id={tag_id}'
             headers = {'Content-Type': 'application/json'}
 
             try:
@@ -30,7 +30,8 @@ def main():
                     print(response.json())
                     failed = False
                 else:
-                    print("\nError sending Data")
+                    print("\nError sending Data. Retrying...")
+                    print(response.json())
                     failed = True
             except Exception as e:
                 print("Exception:", str(e))
