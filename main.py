@@ -21,11 +21,14 @@ def main():
 
             print(f'Read UID: {tag_id} at {time.asctime()}')
 
-            url = f'http://192.168.68.116:44320/api/CompleteRound?id={tag_id}'
+            url = f'https://192.168.68.116:44320/api/CompleteRound'
             headers = {'Content-Type': 'application/json'}
+            data = {
+                "uid": tag_id
+            }
 
             try:
-                response = requests.get(url, headers=headers, verify=False)
+                response = requests.post(url, headers=headers, json=data)
                 if response.status_code == 200:
                     print(response.json())
                     failed = False
