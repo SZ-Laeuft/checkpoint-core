@@ -32,6 +32,10 @@ def main():
                 response = requests.post(url, headers=headers, json=data, verify=False)
                 if response.status_code == 500:
                     print('UID doesnt exist!')
+                elif response.status_code == 200:
+                    print('Round logged for UID' + tag_id + "at " + time.asctime())
+                else:
+                    raise RuntimeWarning("Unexpected response from server; code:" + response.status_code )
             except Exception as e:
                 print("Exception:", str(e))
                 failed = True
