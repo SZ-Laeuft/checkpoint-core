@@ -31,13 +31,7 @@ def main():
 
             try:
                 response = requests.post(url, headers=headers, json=data, verify=False)
-                if response.status_code == 200:
-                    print(response.json())
-                    failed = False
-                else:
-                    print("\nError sending Data. Retrying...")
-                    print(response.json())
-                    failed = True
+                
             except Exception as e:
                 print("Exception:", str(e))
                 failed = True
