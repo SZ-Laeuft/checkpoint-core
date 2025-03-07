@@ -2,6 +2,8 @@ from time import sleep
 from mfrc522 import SimpleMFRC522
 import time
 import requests
+import urllib3
+urllib3.disable_warnings()
 
 def main():
     reader = SimpleMFRC522()
