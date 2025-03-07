@@ -30,6 +30,7 @@ def main():
             }
             try:
                 response = requests.post(url, headers=headers, json=data, verify=False)
+                print(response.status_code)
                 if response.status_code == 500:
                     print('UID doesnt exist!')
                 elif response.status_code == 200:
