@@ -28,9 +28,9 @@ def main():
             data = {
                 "uid": tag_id
             }
-
+            response = requests.post(url, headers=headers, json=data, verify=False)
             try:
-                response = requests.post(url, headers=headers, json=data, verify=False)
+
                 print(response.json())
                 print(response.status_code)
             except Exception as e:
