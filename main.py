@@ -3,8 +3,6 @@ from mfrc522 import SimpleMFRC522
 import time
 import requests
 
-requests.packages.urllib3.disable_warnings()
-
 def main():
     reader = SimpleMFRC522()
 
@@ -30,8 +28,6 @@ def main():
             }
 
             try:
-                response = requests.Session()
-                response.verify = False
                 response = requests.post(url, headers=headers, json=data, verify=False)
                 if response.status_code == 200:
                     print(response.json())
