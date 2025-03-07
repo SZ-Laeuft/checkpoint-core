@@ -35,7 +35,7 @@ def main():
                 if response.status_code == 500:
                     print('UID doesnt exist!')
                 elif response.status_code == 200:
-                    print('Round logged for UID' + str(tag_id) + "at " + str(time.asctime()))
+                    print('Round logged for UID ' + str(tag_id) + " at " + str(time.asctime("%.2d:%.2d:%.2d")))
                 else:
                     raise RuntimeWarning("Unexpected response from server; code:" + response.status_code )
             except Exception as e:
