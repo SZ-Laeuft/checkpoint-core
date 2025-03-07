@@ -23,7 +23,7 @@ def main():
 
             print(f'Read UID: {tag_id} at {time.asctime()}')
 
-            url = f'https://192.168.68.116:44320/api/CompleteRound'
+            url = f'https://192.168.68.68:44320/api/CompleteRound'
             headers = {'Content-Type': 'application/json'}
             data = {
                 "uid": tag_id
