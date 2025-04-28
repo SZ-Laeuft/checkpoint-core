@@ -3,4 +3,5 @@
   <component name="Black">
     <option name="sdkName" value="Python 3.12 (laufevent_checkpoint)" />
   </component>
+  <component name="ProjectRootManager" version="2" project-jdk-name="Python 3.12 (Laufevent_Python)" project-jdk-type="Python SDK" />
 </project>

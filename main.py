@@ -1,48 +1,68 @@
-from time import sleep
-from xml.etree.ElementTree import tostring
-
-from mfrc522 import SimpleMFRC522
 import time
+import json
+import websockets
+from mfrc522 import SimpleMFRC522
+import asyncio
 import requests
 import urllib3
 urllib3.disable_warnings()
 
-def main():
+async def send_to_websocket(websocket, data):
+
+    # Send the data as a JSON string
+    await websocket.send(json.dumps(data))
+    print(f"Sent data: {data} to WebSocket at {time.asctime()}")
+
+async def main():
     reader = SimpleMFRC522()
 
     lastid = 0
     read_recently = False
     failed = False
 
-    while True:
-        if not read_recently:
-            print("\nReady to scan!")
-            read_recently = True
+    # Establish WebSocket connection once
+    uri = "ws://localhost:8080"
 
-        tag_id = reader._read_id()
-        if lastid!=tag_id or failed:
-            lastid=tag_id
+    async with websockets.connect(uri) as websocket:
+        while True:
+            if not read_recently:
+                print("\nReady to scan!")
+                read_recently = True
+                await send_to_websocket(websocket, {"state": "idle", "uid": "-1", "repsone": "-1", "extras":""})
 
-            print(f'Read UID: {tag_id} at {time.asctime()}')
+            uid = reader._read_id()
+            if lastid != uid or failed:
+                lastid = uid
 
-            url = f'https://192.168.68.68:44320/api/CompleteRound'
-            headers = {'Content-Type': 'application/json'}
-            data = {
-                "uid": tag_id
-            }
-            try:
-                response = requests.post(url, headers=headers, json=data, verify=False)
-                if response.status_code == 500:
-                    print('UID doesnt exist!')
-                elif response.status_code == 200:
-                    print('Round logged for UID ' + str(tag_id) + " at " + str(time.asctime()))
-                else:
-                    raise RuntimeWarning("Unexpected response from server; code:" + response.status_code )
-            except Exception as e:
-                print("Exception:", str(e))
-                failed = True
+                print(f'Read UID: {uid} at {time.asctime()}')
+                await send_to_websocket(websocket, {"state": "loading", "uid": uid, "repsone": "-1", "extras":""})
 
-            read_recently = False
+                url = f'https://192.168.68.68:44320/api/CompleteRound'
+                headers = {'Content-Type': 'application/json'}
+                data = {
+                    "uid": uid
+                }
+                try:
+                    response = requests.post(url, headers=headers, json=data, verify=False)
+                    if response.status_code == 500:
+                        print('UID doesnt exist!')
+                        await send_to_websocket(websocket, {"state": "error", "uid": uid, "repsone": "500",
+                                                            "extras":"Hoppala!|Fehler:|UID existiert nicht!"})
+                    elif response.status_code == 200:
+                        print('Round logged for UID ' + str(uid) + " at " + str(time.asctime()))
+                        await send_to_websocket(websocket, {"state": "success", "uid": uid, "repsone": "200",
+                                                            "extras": ""})
+                    else:
+                        await send_to_websocket(websocket, {"state": "error", "uid": uid, "repsone": response.status_code,
+                                                            "extras": ""})
+                        raise RuntimeWarning("Unexpected response from server; code:" + response.status_code)
+
+                except Exception as e:
+                    print("Exception:", str(e))
+                    failed = True
+
+                read_recently = False
+            await asyncio.sleep(1)  # Add a small delay to avoid high CPU usage
 
 if __name__ == '__main__':
-    main()
+    asyncio.run(main())
