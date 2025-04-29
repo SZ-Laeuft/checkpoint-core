@@ -12,19 +12,30 @@ async def send_to_websocket(websocket, data):
     await websocket.send(json.dumps(data))
     print(f"Sent data: {data} to WebSocket at {time.asctime()}")
 
+async def keep_websocket_alive(websocket):
+    while True:
+        try:
+            pong_waiter = await websocket.ping()
+            await asyncio.wait_for(pong_waiter, timeout=10)
+            print(f"Ping sent at {time.asctime()}")
+        except Exception as e:
+            print(f"Ping failed: {e}")
+            break
+        await asyncio.sleep(30)  # Ping every 30 seconds
+
 async def connect_and_run():
     reader = SimpleMFRC522()
     lastid = 0
     read_recently = False
     failed = False
-
     uri = "ws://localhost:8080"
 
-    # Retry loop for connecting to the WebSocket
     while True:
         try:
-            async with websockets.connect(uri) as websocket:
-                # Main loop runs once connected
+            async with websockets.connect(uri, ping_interval=None) as websocket:
+                # Start ping keepalive in the background
+                asyncio.create_task(keep_websocket_alive(websocket))
+
                 while True:
                     if not read_recently:
                         print("\nReady to scan!")
@@ -67,10 +78,11 @@ async def connect_and_run():
 
                         read_recently = False
 
-                    await asyncio.sleep(1)  # Small delay to reduce CPU usage
+                    await asyncio.sleep(1)
+
         except Exception as e:
             print(f"WebSocket connection failed: {e}. Retrying in 0.5s...")
-            await asyncio.sleep(0.5)  # Retry delay
+            await asyncio.sleep(0.5)
 
 if __name__ == '__main__':
     asyncio.run(connect_and_run())
