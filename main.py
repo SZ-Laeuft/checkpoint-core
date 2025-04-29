@@ -50,7 +50,7 @@ async def connect_and_run():
                         await send_to_websocket(websocket, {
                             "state": "loading", "uid": uid, "repsone": "-1", "extras": ""})
 
-                        url = f'https://192.168.68.68:8080/api/Lap/CompleteRound'
+                        url = f'http://192.168.68.68:8080/api/Lap/CompleteRound'
                         headers = {'Content-Type': 'application/json'}
                         data = {"uid": uid}
                         try:
