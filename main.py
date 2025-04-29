@@ -62,8 +62,22 @@ async def connect_and_run():
                                     "extras": "Hoppala!|Fehler:|UID existiert nicht!"})
                             elif response.status_code == 200:
                                 print('Round logged for UID ' + str(uid) + " at " + str(time.asctime()))
-                                await send_to_websocket(websocket, {
-                                    "state": "success", "uid": uid, "repsone": "200", "extras": ""})
+                                get_user_url = f'http://192.168.68.68:8080/api/Checkpoint/ci-by-uid?uid={uid}'
+                                response_ciu = requests.get(get_user_url, headers=headers, verify=False)
+                                if response_ciu.status_code == 200:
+                                    extratext= (response_ciu.json().get('firstName') + " "
+                                                + response_ciu.json().get('lastName') + "|"
+                                                + "Runde:" + "|" + response_ciu.json().get('roundCount') + "|"
+                                                + "Zeit:" + "|" + response_ciu.json().get('lapTime') + "|"
+                                                + "Bestzeit:" + "|" + response_ciu.json().get('bestzeit'))
+
+                                    await send_to_websocket(websocket, {
+                                        "state": "success", "uid": uid, "repsone": "200", "extras": extratext})
+
+                                else:
+                                    await send_to_websocket(websocket, {
+                                        "state": "error", "uid": uid, "repsone": response_ciu.status_code,
+                                        "extras": "Hoppala!|Fehler:|Nutzerdaten fehler!"})
                             else:
                                 await send_to_websocket(websocket, {
                                     "state": "error", "uid": uid, "repsone": response.status_code, "extras": ""})
