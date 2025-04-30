@@ -86,7 +86,7 @@ async def connect_and_run():
                                             f"{user_data.get('firstName', '')} {user_data.get('lastName', '')}|"
                                             f"Runde:|{user_data.get('roundCount', '')}|"
                                             f"Zeit:|{user_data.get('lapTime', '')}|"
-                                            f"Bestzeit:|{user_data.get('bestzeit', '')}"
+                                            f"Bestzeit:|{user_data.get('fastestLap', '')}"
                                         )
 
                                         await send_to_websocket(websocket, {
