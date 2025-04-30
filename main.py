@@ -21,11 +21,11 @@ async def keep_websocket_alive(websocket):
         except Exception as e:
             print(f"Ping failed: {e}")
             break
-        await asyncio.sleep(30)  # Ping every 30 seconds
+        await asyncio.sleep(30)
 
 async def connect_and_run():
     reader = SimpleMFRC522()
-    lastid = 0
+    lastid = None
     read_recently = False
     failed = False
     uri = "ws://localhost:8080"
@@ -33,7 +33,6 @@ async def connect_and_run():
     while True:
         try:
             async with websockets.connect(uri, ping_interval=None) as websocket:
-                # Start ping keepalive in the background
                 asyncio.create_task(keep_websocket_alive(websocket))
 
                 while True:
@@ -43,55 +42,80 @@ async def connect_and_run():
                         await send_to_websocket(websocket, {
                             "state": "idle", "uid": "-1", "repsone": "-1", "extras": ""})
 
-                    uid = reader._read_id()
+                    raw_uid = reader._read_id()
+
+                    # Validate UID
+                    if raw_uid is None or not str(raw_uid).isdigit():
+                        print("Invalid UID read. Skipping.")
+                        await asyncio.sleep(1)
+                        continue
+
+                    uid = str(raw_uid)
+
                     if lastid != uid or failed:
                         lastid = uid
-                        print(f'Read UID: {uid} at {time.asctime()}')
+                        print(f"Read UID: {uid} at {time.asctime()}")
                         await send_to_websocket(websocket, {
                             "state": "loading", "uid": uid, "repsone": "-1", "extras": ""})
 
-                        url = f'http://192.168.68.68:8080/api/Lap/CompleteRound'
+                        url = 'http://192.168.68.68:8080/api/Lap/CompleteRound'
                         headers = {"Content-Type": "application/json"}
-                        data = {"uid": str(uid)}
+                        data = {"uid": uid}
+
                         try:
                             response = requests.post(url, headers=headers, json=data, verify=False)
+                            print("POST Response:", response.status_code, response.text)
+
                             if response.status_code == 500:
-                                print('UID doesnt exist!')
+                                print("UID doesn't exist!")
                                 await send_to_websocket(websocket, {
                                     "state": "error", "uid": uid, "repsone": "500",
                                     "extras": "Hoppala!|Fehler:|UID existiert nicht!"})
-                            elif response.status_code == 200:
-                                try:
-                                    print('Round logged for UID ' + str(uid) + " at " + str(time.asctime()))
 
-                                    get_user_url = f'http://192.168.68.68:8080/api/Checkpoint/ci-by-uid?uid=' + uid
+                            elif response.status_code == 200:
+                                print(f"Round logged for UID {uid} at {time.asctime()}")
+                                get_user_url = f"http://192.168.68.68:8080/api/Checkpoint/ci-by-uid?uid={uid}"
+
+                                try:
                                     response_ciu = requests.get(get_user_url, headers=headers, verify=False)
+                                    print("CIU Response:", response_ciu.status_code, response_ciu.text)
+
                                     if response_ciu.status_code == 200:
-                                        extratext= (response_ciu.json().get('firstName') + " "
-                                                    + response_ciu.json().get('lastName') + "|"
-                                                    + "Runde:" + "|" + response_ciu.json().get('roundCount') + "|"
-                                                    + "Zeit:" + "|" + response_ciu.json().get('lapTime') + "|"
-                                                    + "Bestzeit:" + "|" + response_ciu.json().get('bestzeit'))
+                                        user_data = response_ciu.json()
+                                        extratext = (
+                                            f"{user_data.get('firstName', '')} {user_data.get('lastName', '')}|"
+                                            f"Runde:|{user_data.get('roundCount', '')}|"
+                                            f"Zeit:|{user_data.get('lapTime', '')}|"
+                                            f"Bestzeit:|{user_data.get('bestzeit', '')}"
+                                        )
 
                                         await send_to_websocket(websocket, {
                                             "state": "success", "uid": uid, "repsone": "200", "extras": extratext})
-                                except Exception as e:
-                                    print(e)
 
-                                else:
+                                    else:
+                                        await send_to_websocket(websocket, {
+                                            "state": "error", "uid": uid,
+                                            "repsone": str(response_ciu.status_code),
+                                            "extras": "Hoppala!|Fehler:|Nutzerdaten fehler!"})
+                                except Exception as e:
+                                    print(f"Exception during CIU request: {e}")
                                     await send_to_websocket(websocket, {
-                                        "state": "error", "uid": uid, "repsone": response_ciu.status_code,
-                                        "extras": "Hoppala!|Fehler:|Nutzerdaten fehler!"})
+                                        "state": "error", "uid": uid, "repsone": "-1",
+                                        "extras": f"Hoppala!|Fehler:|{e}"})
+
                             else:
                                 await send_to_websocket(websocket, {
-                                    "state": "error", "uid": uid, "repsone": response.status_code, "extras": ""})
-                                raise RuntimeWarning(
-                                    "Unexpected response from server; code:" + str(response.status_code))
+                                    "state": "error", "uid": uid, "repsone": str(response.status_code),
+                                    "extras": "Unerwarteter Serverstatus"})
+                                raise RuntimeWarning(f"Unexpected response from server: {response.status_code}")
+
+                            failed = False
+
                         except Exception as e:
-                            print("Exception:", str(e))
+                            print(f"Exception during POST request: {e}")
                             await send_to_websocket(websocket, {
-                                "state": "error", "uid": "-1", "repsone": response.status_code,
-                                "extras": ("Hoppala!|Fehler:|" + str(e) )})
+                                "state": "error", "uid": uid, "repsone": "-1",
+                                "extras": f"Hoppala!|Fehler:|{e}"})
                             failed = True
 
                         read_recently = False
