@@ -120,7 +120,7 @@ async def connect_and_run():
 
                         read_recently = False
 
-                    await asyncio.sleep(1)
+                    await asyncio.sleep(3)
 
         except Exception as e:
             print(f"WebSocket connection failed: {e}. Retrying in 0.5s...")
