@@ -51,8 +51,8 @@ async def connect_and_run():
                             "state": "loading", "uid": uid, "repsone": "-1", "extras": ""})
 
                         url = f'http://192.168.68.68:8080/api/Lap/CompleteRound'
-                        headers = {'Content-Type': 'application/json'}
-                        data = {"uid": uid}
+                        headers = {"Content-Type": "application/json"}
+                        data = {"uid": str(uid)}
                         try:
                             response = requests.post(url, headers=headers, json=data, verify=False)
                             if response.status_code == 500:
@@ -86,8 +86,8 @@ async def connect_and_run():
                         except Exception as e:
                             print("Exception:", str(e))
                             await send_to_websocket(websocket, {
-                                "state": "error", "uid": "-1", "repsone": "-1",
-                                "extras": ("Hoppala!|Fehler:|" + str(e))})
+                                "state": "error", "uid": "-1", "repsone": response.status_code,
+                                "extras": ("Hoppala!|Fehler:|" + str(e) )})
                             failed = True
 
                         read_recently = False
