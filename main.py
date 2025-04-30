@@ -87,7 +87,7 @@ async def connect_and_run():
                             print("Exception:", str(e))
                             await send_to_websocket(websocket, {
                                 "state": "error", "uid": "-1", "repsone": "-1",
-                                "extras": "Hoppala!|Fehler:|Timeout, API Reagiert nicht!"})
+                                "extras": ("Hoppala!|Fehler:|" + str(e))})
                             failed = True
 
                         read_recently = False
