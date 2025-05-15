@@ -50,7 +50,7 @@ async def connect_and_run():
                         await asyncio.sleep(1)
                         continue
 
-                    uid = str(raw_uid)
+                    uid = f"{raw_uid:08X}"
 
                     if lastid != uid or failed:
                         lastid = uid
