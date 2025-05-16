@@ -70,7 +70,7 @@ async def connect_and_run():
 
                     
                     print (f"Raw UID: {raw_uid}")
-                    uid = str(raw_uid)
+                    uid = f"{raw_uid:08X}"
                     print (f"UID: {uid}")
                     # Convert int to bytes, then to decimal string (big-endian)
                     uid_bytes = raw_uid.to_bytes((raw_uid.bit_length() + 7) // 8, 'big')
