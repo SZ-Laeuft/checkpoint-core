@@ -50,7 +50,18 @@ async def connect_and_run():
                         await asyncio.sleep(1)
                         continue
 
+                    print (f"Raw UID: {raw_uid}")
                     uid = reader._uid_to_number(raw_uid)
+                    print (f"UID: {uid}")
+                    # Convert int to bytes, then to decimal string (big-endian)
+                    uid_bytes = raw_uid.to_bytes((raw_uid.bit_length() + 7) // 8, 'big')
+                    uid_decimal = ''.join(str(b) for b in uid_bytes)
+                    print("Big-endian:", uid_decimal)
+
+                    # Try little-endian if not matching
+                    uid_bytes_le = raw_uid.to_bytes((raw_uid.bit_length() + 7) // 8, 'little')
+                    uid_decimal_le = ''.join(str(b) for b in uid_bytes_le)
+                    print("Little-endian:", uid_decimal_le)
 
                     if lastid != uid or failed:
                         lastid = uid
