@@ -5,6 +5,24 @@ from mfrc522 import SimpleMFRC522
 import asyncio
 import requests
 import urllib3
+import logging
+import os
+import sys
+
+# Setup logging to ~/log.txt
+log_file_path = os.path.expanduser('~/log.txt')
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s [%(levelname)s] %(message)s',
+    handlers=[
+        logging.FileHandler(log_file_path),
+        logging.StreamHandler(sys.stdout)
+    ]
+)
+
+# Redirect print to logging
+print = lambda *args, **kwargs: logging.info(' '.join(str(arg) for arg in args))
+
 
 urllib3.disable_warnings()
 
