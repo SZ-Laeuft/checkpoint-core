@@ -25,23 +25,21 @@ print = lambda *args, **kwargs: logging.info(' '.join(str(arg) for arg in args))
 
 urllib3.disable_warnings()
 
-
 async def send_to_websocket(websocket, data):
     await websocket.send(json.dumps(data))
     print(f"Sent data: {data} to WebSocket at {time.asctime()}")
 
-
-async def keep_websocket_alive(websocket):
-    while True:
+async def keep_websocket_alive(websocket, stop_event):
+    while not stop_event.is_set():
         try:
             pong_waiter = await websocket.ping()
-            await asyncio.wait_for(pong_waiter, timeout=10)
+            await asyncio.wait_for(pong_waiter, timeout=5)
             print(f"Ping sent at {time.asctime()}")
         except Exception as e:
             print(f"Ping failed: {e}")
+            stop_event.set()
             break
-        await asyncio.sleep(30)
-
+        await asyncio.sleep(10)
 
 async def connect_and_run():
     reader = SimpleMFRC522()
@@ -53,9 +51,10 @@ async def connect_and_run():
     while True:
         try:
             async with websockets.connect(uri, ping_interval=None) as websocket:
-                asyncio.create_task(keep_websocket_alive(websocket))
+                stop_event = asyncio.Event()
+                keep_alive_task = asyncio.create_task(keep_websocket_alive(websocket, stop_event))
 
-                while True:
+                while not stop_event.is_set():
                     if not read_recently:
                         print("\nReady to scan!")
                         read_recently = True
@@ -64,14 +63,12 @@ async def connect_and_run():
 
                     raw_uid = reader._read_id()
 
-                    # Validate UID
                     if raw_uid is None or not str(raw_uid).isdigit():
                         print("Invalid UID read. Skipping.")
                         await asyncio.sleep(1)
                         continue
 
                     uid = raw_uid
-
 
                     if lastid != uid or failed:
                         lastid = uid
@@ -143,10 +140,11 @@ async def connect_and_run():
 
                     await asyncio.sleep(3)
 
+                print("Keep-alive task ended, reconnecting...")
+
         except Exception as e:
             print(f"WebSocket connection failed: {e}. Retrying in 0.5s...")
             await asyncio.sleep(0.5)
-
 
 if __name__ == '__main__':
     asyncio.run(connect_and_run())
