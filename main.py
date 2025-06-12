@@ -6,7 +6,7 @@ import urllib3
 import logging
 import os
 import sys
-import datetime
+from datetime import datetime, timedelta
 
 # Setup logging to ~/log.txt
 log_file_path = os.path.expanduser('~/log.txt')
