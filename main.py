@@ -36,7 +36,7 @@ def main():
     lastid = None
     read_recently = False
     failed = False
-    lastreadtime = datetime.datetime.now() - timedelta(seconds=3)
+    lastreadtime = datetime.now() - timedelta(seconds=3)
 
     while True:
         try:
@@ -132,7 +132,7 @@ def main():
 
                 read_recently = False
 
-            lastreadtime = datetime.datetime.now()
+            lastreadtime = datetime.now()
 
         except Exception as e:
             print(f"Main loop exception: {e}. Retrying in 0.5s...")
