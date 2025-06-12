@@ -35,15 +35,17 @@ def main():
     lastid = None
     read_recently = False
     failed = False
+    lastreadtime = datetime.datetime.now() - timedelta(seconds=3)
 
     while True:
         try:
             if not read_recently:
                 print("\nReady to scan!")
                 read_recently = True
-                send_to_server({
-                    "state": "idle", "uid": "-1", "response": "-1", "extras": ""
-                })
+                if (datetime.now() - lastreadtime).total_seconds() >= 3:
+                    send_to_server({
+                        "state": "idle", "uid": "-1", "response": "-1", "extras": ""
+                    })
 
             raw_uid = reader._read_id()
 
@@ -129,7 +131,7 @@ def main():
 
                 read_recently = False
 
-            time.sleep(3)
+            lastreadtime = datetime.datetime.now()
 
         except Exception as e:
             print(f"Main loop exception: {e}. Retrying in 0.5s...")
