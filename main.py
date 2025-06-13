@@ -87,7 +87,7 @@ def main():
                             if response_ciu.status_code == 200:
                                 user_data = response_ciu.json()
                                 extratext = (
-                                    f"{user_data.get('firstName', '')} {user_data.get('lastName', '')}|"
+                                    f"{user_data.get('firstName', '').capitalize()} {user_data.get('lastName', '').capitalize()}|"
                                     f"Runde:|{user_data.get('roundCount', '')}|"
                                     f"Zeit:|{user_data.get('lapTime', '')}|"
                                     f"Bestzeit:|{user_data.get('fastestLap', '')}"
